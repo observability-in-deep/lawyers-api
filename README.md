@@ -1,1 +1,1 @@
-# go-template
+# lawyers-api
