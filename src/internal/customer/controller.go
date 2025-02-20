@@ -45,8 +45,17 @@ func update(c *fiber.Ctx) error {
 	return c.JSON(customer)
 }
 
+func delete(c *fiber.Ctx) error {
+	err := Delete(c.UserContext(), c.Params("customerId"))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func Register(app *fiber.App) {
 	app.Get("/customer/:customerCPF", get)
 	app.Post("/customer", post)
 	app.Put("/customer/:customerId", update)
+	app.Delete("/customer/:customerId", delete)
 }

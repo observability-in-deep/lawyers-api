@@ -1,4 +1,4 @@
-package helthcheck
+package health
 
 import "github.com/gofiber/fiber/v2"
 
@@ -7,5 +7,5 @@ func get(c *fiber.Ctx) error {
 }
 
 func Register(app *fiber.App) {
-	app.Get("/helthcheck", get)
+	app.Get("/health", get)
 }

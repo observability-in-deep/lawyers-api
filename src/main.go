@@ -10,8 +10,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/observability-in-deep/lawyers-api/src/config"
 	"github.com/observability-in-deep/lawyers-api/src/internal/customer"
-	"github.com/observability-in-deep/lawyers-api/src/internal/helthcheck"
+	health "github.com/observability-in-deep/lawyers-api/src/internal/health"
+	"github.com/observability-in-deep/lawyers-api/src/internal/lawyers"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -21,10 +23,23 @@ import (
 func initTracer() *trace.TracerProvider {
 
 	config := config.NewConfig()
+	var exporter trace.SpanExporter
+	var err error
 
-	exporter, err := stdouttrace.New(stdouttrace.WithPrettyPrint())
-	if err != nil {
-		log.Fatal(err)
+	if !config.IsLocal {
+		exporter, err = otlptracehttp.New(
+			context.Background(),
+			otlptracehttp.WithInsecure(),
+			otlptracehttp.WithEndpoint(config.OtlpEndpoint),
+		)
+		if err != nil {
+			log.Fatal(err)
+		}
+	} else {
+		exporter, err = stdouttrace.New(stdouttrace.WithPrettyPrint())
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tp := trace.NewTracerProvider(
@@ -59,8 +74,9 @@ func main() {
 		},
 	))
 
-	helthcheck.Register(app)
+	health.Register(app)
 	customer.Register(app)
+	lawyers.Register(app)
 
 	err := app.Listen(config.ListenAddress)
 	if err != nil {
