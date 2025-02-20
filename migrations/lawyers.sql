@@ -6,7 +6,7 @@ CREATE TABLE if not exists lawyers (
     deleted_at TIMESTAMP,
     oab TEXT UNIQUE,
     email TEXT UNIQUE,
-    phone TEXT UNIQUE,
+    phone TEXT UNIQUE
 );
 
 
