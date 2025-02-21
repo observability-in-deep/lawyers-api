@@ -1,5 +1,9 @@
 package pool
 
+import (
+	"os"
+)
+
 type Config struct {
 	Host     string
 	Port     string
@@ -10,14 +14,21 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Host:     "localhost",
-		Port:     "5432",
-		User:     "lawyer-user",
-		Password: "lawyer-password",
-		DBName:   "lawyers",
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnv("DB_PORT", "5432"),
+		User:     getEnv("DB_USER", "lawyer"),
+		Password: getEnv("DB_PASSWORD", "lawyer"),
+		DBName:   getEnv("DB_NAME", "lawyer"),
 	}
 }
 
 func (c *Config) CreateString() string {
 	return "host=" + c.Host + " port=" + string(c.Port) + " user=" + c.User + " password=" + c.Password + " dbname=" + c.DBName
+}
+
+func getEnv(key string, defaultValue string) string {
+	if value, exists := os.LookupEnv(key); exists {
+		return value
+	}
+	return defaultValue
 }

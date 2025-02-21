@@ -80,7 +80,7 @@ func main() {
 
 	err := app.Listen(config.ListenAddress)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 }
