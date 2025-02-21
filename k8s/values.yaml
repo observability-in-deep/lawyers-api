@@ -1,0 +1,87 @@
+apiversion: v1
+kind: configMap
+metadata:
+  name: lawyer-api-config
+data:
+  GO_LISTEN_ADDRESS: "localhost:3001"
+  IS_LOCAL: false
+  OTLP_ENDPOINT: "http://otel-collector:4317"
+  TZ: "America/Sao_Paulo"
+  INGRESS_READY: "true"
+  DB_HOST: "lawyer-db"
+  DB_PORT: "5432"
+  DB_USER: "lawyer-user"
+  DB_PASSWORD: "lawyer-password"
+  DB_NAME: "lawyers"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lawyer-api
+  labels:
+    app: lawyer-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lawyer-api
+  template:
+    metadata:
+      labels:
+        app: lawyer-api
+    spec:
+      containers:
+        - name: lawyer-api
+          image: lawyer-api:latest
+          ports:
+            - containerPort: 3001
+          env:
+            envFrom:
+              - configMapRef:
+                  name: lawyer-api-config
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lawyer-api
+spec:
+  selector:
+    app: lawyer-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3001
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: lawyer-api
+  labels:
+    app: lawyer-api
+spec:
+  rules:
+    - host: lawyer-api.local
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: lawyer-api
+                port:
+                  number: 80

@@ -12,6 +12,10 @@ RUN go build -C ./src -o /go/bin/app
 
 FROM alpine:3.20
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+USER appuser
+
 COPY --from=builder /go/bin/app /app
 
 CMD ["/app"]
