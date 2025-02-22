@@ -4,7 +4,7 @@ metadata:
   name: lawyer-api-config
 data:
   GO_LISTEN_ADDRESS: "localhost:3001"
-  IS_LOCAL: false
+  IS_LOCAL: "false"
   OTLP_ENDPOINT: "http://otel-collector:4317"
   TZ: "America/Sao_Paulo"
   INGRESS_READY: "true"
@@ -36,10 +36,9 @@ spec:
           image: lawyer-api:latest
           ports:
             - containerPort: 3001
-          env:
-            envFrom:
-              - configMapRef:
-                  name: lawyer-api-config
+          envFrom:
+          - configMapRef:
+             name: lawyer-api-config
           resources:
             requests:
               memory: "64Mi"
