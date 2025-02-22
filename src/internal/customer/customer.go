@@ -16,6 +16,21 @@ func Get(ctx context.Context, customerCPF string) (*models.Customers, error) {
 	ctx, span := tracer.Start(ctx, "Get")
 	defer span.End()
 
+	metric := otel.Meter("customer_get")
+	requestCounter, err := metric.Int64Counter("customer_get_request")
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	durationHistogram, err := metric.Float64Histogram("customer_get_duration")
+	if err != nil {
+		span.RecordError(err)
+		return nil, err
+	}
+
+	startTime := time.Now()
+
 	Customers := &models.Customers{}
 
 	now := time.Now().UTC()
@@ -36,6 +51,9 @@ func Get(ctx context.Context, customerCPF string) (*models.Customers, error) {
 		span.RecordError(err)
 		return nil, err
 	}
+
+	requestCounter.Add(ctx, 1)
+	durationHistogram.Record(ctx, time.Since(startTime).Seconds())
 
 	span.SetAttributes(
 		attribute.String("customerCPF", customerCPF),

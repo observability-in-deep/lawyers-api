@@ -16,9 +16,9 @@ func NewConfig() *Config {
 	return &Config{
 		Host:     getEnv("DB_HOST", "localhost"),
 		Port:     getEnv("DB_PORT", "5432"),
-		User:     getEnv("DB_USER", "lawyer"),
-		Password: getEnv("DB_PASSWORD", "lawyer"),
-		DBName:   getEnv("DB_NAME", "lawyer"),
+		User:     getEnv("DB_USER", "lawyer-user"),
+		Password: getEnv("DB_PASSWORD", "lawyer-password"),
+		DBName:   getEnv("DB_NAME", "lawyers"),
 	}
 }
 
