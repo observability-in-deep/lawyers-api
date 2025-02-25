@@ -51,13 +51,15 @@ func newMeterProvider() (*metric.MeterProvider, error) {
 
 	meterProvider := metric.NewMeterProvider(
 		metric.WithReader(metric.NewPeriodicReader(metricExporter,
-			// Default is 1m. Set to 3s for demonstrative purposes.
-			metric.WithInterval(10*time.Second))),
+			metric.WithInterval(40*time.Second))),
 		metric.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String(config.ServiceName),
 		)),
 	)
+
+	otel.SetMeterProvider(meterProvider)
+
 	return meterProvider, nil
 }
 
@@ -114,7 +116,7 @@ func main() {
 
 	app.Use(logger.New(
 		logger.Config{
-			Format:     "${time} | ${status} | ${latency} | ${ip} | ${method} | ${path} | ${error}\n",
+			Format:     "${time} | ${status} | ${latency} | ${ip} | ${method} | ${path} | ${error} | " + config.ServiceName + "\n",
 			TimeFormat: "15:04:05",
 			TimeZone:   "Local",
 			Output:     os.Stdout,
