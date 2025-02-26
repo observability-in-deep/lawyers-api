@@ -1,11 +1,12 @@
-apiversion: v1
-kind: configMap
+apiVersion: v1
+kind: ConfigMap
 metadata:
   name: lawyer-api-config
+
 data:
-  GO_LISTEN_ADDRESS: "localhost:3001"
+  GO_LISTEN_ADDRESS: ":3001"
   IS_LOCAL: "false"
-  OTLP_ENDPOINT: "http://otel-collector:4317"
+  OTLP_ENDPOINT: "otel-lawyer-api-collector:4318"
   TZ: "America/Sao_Paulo"
   INGRESS_READY: "true"
   DB_HOST: "lawyer-db"
@@ -22,7 +23,7 @@ metadata:
   labels:
     app: lawyer-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: lawyer-api
@@ -33,19 +34,12 @@ spec:
     spec:
       containers:
         - name: lawyer-api
-          image: lawyer-api:latest
+          image: docker.io/mariovalente/lawyers-api:v0.4
           ports:
-            - containerPort: 3001
+          - containerPort: 3001
           envFrom:
           - configMapRef:
              name: lawyer-api-config
-          resources:
-            requests:
-              memory: "64Mi"
-              cpu: "250m"
-            limits:
-              memory: "128Mi"
-              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /health
@@ -57,11 +51,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: lawyer-api
+  labels:
+    app: lawyer-api
+    self-monitor: "true"
 spec:
   selector:
     app: lawyer-api
   ports:
-    - protocol: TCP
+    - name: http
       port: 80
       targetPort: 3001
   type: ClusterIP
@@ -70,6 +67,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: lawyer-api
+
   labels:
     app: lawyer-api
 spec:
@@ -84,3 +82,52 @@ spec:
                 name: lawyer-api
                 port:
                   number: 80
+---
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-lawyer-api
+spec:
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint:
+          http:
+            endpoint:
+
+    processors:
+      batch:
+        send_batch_size: 10000
+        timeout: 10s
+    exporters:
+      otlp:
+        endpoint: "tempo:4317"
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlp]
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: lawyer-api
+spec:
+  selector:
+    matchLabels:
+      app: lawyer-api
+      self-monitor: "true"
+  endpoints:
+  - path: /metrics
+    port: http
+    scheme: http
+    scrapeTimeout: 30s
+  namespaceSelector:
+    matchNames:
+    - default

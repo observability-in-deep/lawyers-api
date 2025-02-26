@@ -8,7 +8,6 @@ import (
 	"github.com/observability-in-deep/lawyers-api/src/pkg/pool"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric"
 )
 
 func Get(ctx context.Context, customerCPF string) (*models.Customers, error) {
@@ -16,14 +15,6 @@ func Get(ctx context.Context, customerCPF string) (*models.Customers, error) {
 	tracer := otel.Tracer("lawyers-api")
 	ctx, span := tracer.Start(ctx, "Get")
 	defer span.End()
-
-	meter := otel.Meter("lawyers-api")
-	requestCounter, err := meter.Int64Counter("customer_get_request", metric.WithDescription("Total number of requests"),
-		metric.WithUnit("{roll}"))
-	if err != nil {
-		span.RecordError(err)
-		return nil, err
-	}
 
 	Customers := &models.Customers{}
 
@@ -45,8 +36,6 @@ func Get(ctx context.Context, customerCPF string) (*models.Customers, error) {
 		span.RecordError(err)
 		return nil, err
 	}
-
-	requestCounter.Add(ctx, 1)
 
 	span.SetAttributes(
 		attribute.String("customerCPF", customerCPF),

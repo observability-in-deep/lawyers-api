@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"os"
-	"time"
 
+	"github.com/ansrivas/fiberprometheus/v2"
 	"github.com/gofiber/contrib/otelfiber"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -14,54 +14,12 @@ import (
 	health "github.com/observability-in-deep/lawyers-api/src/internal/health"
 	"github.com/observability-in-deep/lawyers-api/src/internal/lawyers"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
-	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
-	"go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
-
-func newMeterProvider() (*metric.MeterProvider, error) {
-
-	config := config.NewConfig()
-	var metricExporter metric.Exporter
-	var err error
-
-	if !config.IsLocal {
-		metricExporter, err = otlpmetrichttp.New(
-			context.Background(),
-			otlpmetrichttp.WithInsecure(),
-			otlpmetrichttp.WithEndpoint(config.OtlpEndpoint),
-		)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		metricExporter, err = stdoutmetric.New()
-		if err != nil {
-			return nil, err
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	meterProvider := metric.NewMeterProvider(
-		metric.WithReader(metric.NewPeriodicReader(metricExporter,
-			metric.WithInterval(40*time.Second))),
-		metric.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String(config.ServiceName),
-		)),
-	)
-
-	otel.SetMeterProvider(meterProvider)
-
-	return meterProvider, nil
-}
 
 func initTracer() *trace.TracerProvider {
 
@@ -102,15 +60,19 @@ func main() {
 	app := fiber.New()
 
 	tp := initTracer()
-	mp, ok := newMeterProvider()
-	if ok != nil {
-		log.Fatal(ok)
-	}
-
-	defer func() { _ = mp.Shutdown(context.Background()) }()
 	defer func() { _ = tp.Shutdown(context.Background()) }()
 
-	app.Use(otelfiber.Middleware())
+	prometheus := fiberprometheus.New("lawyers-api")
+
+	prometheus.RegisterAt(app, "/metrics")
+	app.Use(prometheus.Middleware)
+
+	app.Use(func(c *fiber.Ctx) error {
+		if c.Path() == "/health" {
+			return c.Next()
+		}
+		return otelfiber.Middleware()(c)
+	})
 
 	config := config.NewConfig()
 
