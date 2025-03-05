@@ -17,7 +17,7 @@ type Config struct {
 func NewConfig() *Config {
 	return &Config{
 		ServiceName:   "lawyers-api",
-		ListenAddress: getEnv("GO_LISTEN_ADDRESS", "localhost:3001"),
+		ListenAddress: getEnv("GO_LISTEN_ADDRESS", ":3001"),
 		IsLocal:       getEnvAsBool("IS_LOCAL", true),
 		OtlpEndpoint:  getEnv("OTLP_ENDPOINT", "localhost:4317"),
 	}
