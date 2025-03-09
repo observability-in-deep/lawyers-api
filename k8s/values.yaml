@@ -161,11 +161,11 @@ metadata:
 spec:
   jobName: lawyer-api
   module: http_2xx
-  prober: 
+  prober:
     url: lawyer-api:80
     scheme: http
     path: /health
   targets:
-    staticConfig: 
-      static: 
+    staticConfig:
+      static:
        - lawyer-api/health
