@@ -23,3 +23,7 @@ kubectl apply -f ./k8s/values.yaml
 
 - PS:
     - Não se esqueça de configurar suas envs de conexão no banco no seu configmap
+
+- **AlERTA**
+
+Para seguir com os testes é necessario criar um banco no seu cluster ou criar na plataform que vamos indicar no cursos
