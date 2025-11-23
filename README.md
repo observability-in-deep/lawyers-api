@@ -27,3 +27,5 @@ kubectl apply -f ./k8s/values.yaml
 - **AlERTA**
 
 Para seguir com os testes é necessario criar um banco no seu cluster ou criar na plataform que vamos indicar no cursos
+
+você pode subir o banco pg em qualquer lugar que desejar caso a solução apresentada no curso não esteja disponivel.
