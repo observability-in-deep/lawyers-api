@@ -1,6 +1,6 @@
 # lawyers-api
 
-- Esse é um service para testar seus conhecimentos no curso observability in deep
+- Esse é um service para testar seus conhecimentos no curso observability in deep é uma api que vamos integrar nos nosso dashboards
 
 ## Oque ele faz ?
 
